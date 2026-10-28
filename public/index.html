@@ -132,6 +132,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .step{display:flex;align-items:center;gap:10px;font-weight:800;font-size:17px}
 .step > span:first-child{width:28px;height:28px;border-radius:50%;background:var(--cactus);color:#fff;display:grid;place-items:center;font-size:14px;flex:none}
 .hint{font-size:14px;color:var(--ink-soft);font-weight:400}
+.req{color:var(--ink-soft);font-weight:400}
 .cal{background:var(--sand);border:1px solid var(--rule);border-radius:16px;padding:12px}
 .cal-nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
 .cal-nav b{font-family:var(--display);font-weight:400;font-size:20px}
@@ -336,13 +337,16 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
       <div class="slots" id="slots"><p class="hint">בחרו יום כדי לראות שעות.</p></div>
     </div>
     <div class="panel">
-      <p class="step"><span class="mono">4</span>פרטי ההרכב</p>
+      <p class="step"><span class="mono">4</span>פרטי ההרכב <span class="hint">(כל השדות חובה)</span></p>
       <div class="f2">
-        <div class="field"><label for="b-artist">שם האמן או ההרכב</label><input id="b-artist" autocomplete="organization"></div>
-        <div class="field"><label for="b-phone">טלפון לחזרה</label><input id="b-phone" type="tel" dir="ltr" autocomplete="tel"></div>
+        <div class="field"><label for="b-artist">שם האמן או ההרכב <span class="req" aria-hidden="true">*</span></label><input id="b-artist" autocomplete="organization" required></div>
+        <div class="field"><label for="b-phone">טלפון לחזרה <span class="req" aria-hidden="true">*</span></label><input id="b-phone" type="tel" dir="ltr" autocomplete="tel" required></div>
       </div>
-      <div class="field"><label for="b-players">כמה נגנים מגיעים</label><input id="b-players" type="number" min="1" max="20" inputmode="numeric" dir="ltr" style="max-width:130px"></div>
-      <div class="field"><label for="b-notes">מפרט החזרה</label><textarea id="b-notes" rows="4" placeholder="הרכב ונגנים (למשל: תופים, בס, 2 גיטרות, קלידים, 2 שירה), ציוד שצריך, אינרים, ומה עובדים עליו בחזרה"></textarea></div>
+      <div class="f2">
+        <div class="field"><label for="b-email">מייל לאישור <span class="req" aria-hidden="true">*</span></label><input id="b-email" type="email" dir="ltr" autocomplete="email" autocapitalize="off" spellcheck="false" required></div>
+        <div class="field"><label for="b-players">כמה נגנים מגיעים <span class="req" aria-hidden="true">*</span></label><input id="b-players" type="number" min="1" max="20" inputmode="numeric" dir="ltr" required></div>
+      </div>
+      <div class="field"><label for="b-notes">מפרט החזרה <span class="req" aria-hidden="true">*</span></label><textarea id="b-notes" rows="4" required placeholder="הרכב ונגנים (למשל: תופים, בס, 2 גיטרות, קלידים, 2 שירה), ציוד שצריך, אינרים, ומה עובדים עליו בחזרה"></textarea></div>
       <div class="total"><span>סה״כ</span><b id="b-total" class="mono">180 ₪</b></div>
       <p class="berr" id="b-err" hidden></p>
       <input id="b-web" name="website" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
@@ -481,13 +485,14 @@ async function submitLive(r){
 
 /* booking form */
 function bookingText(r){const d=book.day,date=`יום ${HE_DN[d.getDay()]}, ${d.getDate()}.${d.getMonth()+1}.${d.getFullYear()}`;
-  return `בקשה לקביעת חזרה באולפני סברס\n\nאמן / הרכב: ${r.artist}\nתאריך: ${date}\nשעות: ${fmtH(book.start)}–${fmtH(book.start+book.hours)} (${book.hours} שעות)\nמחיר: ${book.hours*SAB.price} ₪ (${SAB.price} ₪ לשעה)\nטלפון: ${r.phone}\nמספר נגנים: ${r.players}\n\nמפרט:\n${r.notes}`}
+  return `בקשה לקביעת חזרה באולפני סברס\n\nאמן / הרכב: ${r.artist}\nתאריך: ${date}\nשעות: ${fmtH(book.start)}–${fmtH(book.start+book.hours)} (${book.hours} שעות)\nמחיר: ${book.hours*SAB.price} ₪ (${SAB.price} ₪ לשעה)\nטלפון: ${r.phone}\nמייל: ${r.email}\nמספר נגנים: ${r.players}\n\nמפרט:\n${r.notes}`}
 async function onSubmit(e){
   e.preventDefault();
-  const r={artist:$("#b-artist").value.trim(),phone:$("#b-phone").value.trim(),notes:$("#b-notes").value.trim(),players:parseInt($("#b-players").value,10)};
+  const r={artist:$("#b-artist").value.trim(),phone:$("#b-phone").value.trim(),email:$("#b-email").value.trim(),notes:$("#b-notes").value.trim(),players:parseInt($("#b-players").value,10)};
   let m="";
   if(!book.day)m="בחרו יום בלוח.";else if(book.start===null)m="בחרו שעת התחלה.";else if(!r.artist)m="כתבו את שם האמן או ההרכב.";
   else if(r.phone.replace(/\D/g,"").length<9)m="כתבו מספר טלפון מלא, כדי שנוכל לאשר את החזרה.";
+  else if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(r.email))m="כתבו כתובת מייל תקינה, כדי שנשלח לכם אישור.";
   else if(!(r.players>0))m="כתבו כמה נגנים מגיעים לחזרה.";
   else if(r.notes.length<10)m="כתבו מפרט לחזרה: הרכב הנגנים, הציוד שצריך ומה עובדים עליו.";
   if(m){$("#b-err").textContent=m;$("#b-err").hidden=false;return}
@@ -501,7 +506,7 @@ async function onSubmit(e){
       $("#done-h").textContent="הבקשה נשלחה לאולפן";
       $("#done-p").textContent="השעות שמורות לכם עד שבן יאשר. תראו את הסטטוס ב״הבקשות שלי״. אפשר גם לשלוח לו את הפרטים במייל כדי שיראה מהר יותר.";
       $("#b-mail").textContent="שליחת עדכון במייל";
-      ["#b-artist","#b-phone","#b-players","#b-notes"].forEach(s=>$(s).value="");book.start=null;
+      ["#b-artist","#b-phone","#b-email","#b-players","#b-notes"].forEach(s=>$(s).value="");book.start=null;
     }catch(err){btn.disabled=false;btn.textContent="שליחת הבקשה";
       $("#b-err").textContent=err&&err.code==="taken"?"מישהו הזמין בדיוק את השעות האלה. בחרו שעה אחרת.":err&&err.code==="invalid_argument"?"אין לך הרשאה לשמור הזמנה באתר. אפשר לשלוח את הבקשה במייל.":"השליחה לא הצליחה. נסו שוב בעוד רגע.";
       $("#b-err").hidden=false;return}
@@ -515,9 +520,9 @@ async function onSubmit(e){
       const j=await res.json().catch(()=>({}));
       if(!res.ok||!j.ok)throw j;
       $("#done-h").textContent="הבקשה נשלחה לאולפן";
-      $("#done-p").textContent=`הפרטים נשלחו לאולפן. נחזור אליכם לטלפון ${r.phone} כדי לאשר את החזרה. החזרה נקבעת רק אחרי האישור.`;
+      $("#done-p").textContent=`הפרטים נשלחו לאולפן.${j.confirmed?` שלחנו לכם אישור קבלה ל־${r.email}.`:""} נחזור אליכם לטלפון ${r.phone} כדי לאשר את החזרה. החזרה נקבעת רק אחרי האישור.`;
       $("#b-mail").hidden=true;
-      ["#b-artist","#b-phone","#b-players","#b-notes"].forEach(s=>$(s).value="");book.start=null;
+      ["#b-artist","#b-phone","#b-email","#b-players","#b-notes"].forEach(s=>$(s).value="");book.start=null;
     }catch(err){
       $("#done-h").textContent="השליחה האוטומטית לא הצליחה";
       $("#done-p").textContent=`אפשר לשלוח את הבקשה במייל: לחצו על הכפתור כדי לפתוח מייל מוכן ל־${SAB.to}, או העתיקו את הפרטים ושלחו אותם לכתובת הזו.`;
@@ -546,7 +551,7 @@ async function renderManage(){
   const reqCard=x=>{const clash=busy(x.date,x.id).some(([a,b,s])=>s!=="pending"&&x.start<b&&x.start+x.hours>a);
     return `<article class="rq"><header><b>${esc(x.artist)}</b><span class="pill ${ST[x.status][1]}">${ST[x.status][0]}</span></header>
      <p class="rq-when">${dayLabel(x.date)} · <span class="mono">${fmtH(x.start)}–${fmtH(x.start+x.hours)}</span> · ${x.hours} שעות · ${x.hours*(x.price||SAB.price)} ₪</p>
-     <p class="hint">${esc(x.players)} נגנים · טלפון <span dir="ltr" class="sel">${esc(x.phone)}</span> · נשלח על ידי ${esc(who(x.u))}</p>
+     <p class="hint">${esc(x.players)} נגנים · טלפון <span dir="ltr" class="sel">${esc(x.phone)}</span>${x.email?` · מייל <span dir="ltr" class="sel">${esc(x.email)}</span>`:""} · נשלח על ידי ${esc(who(x.u))}</p>
      <p class="rq-notes">${esc(x.notes)}</p>${clash?'<p class="berr">השעות האלה מתנגשות עם הזמנה מאושרת או חסימה.</p>':""}
      ${x.status==="pending"?`<div class="row"><button type="button" class="btn sm" data-ok="${x.u}|${x.id}">אישור</button><button type="button" class="btn sm ghost" data-no="${x.u}|${x.id}">דחייה</button></div>`:
        x.status==="approved"?`<div class="row"><button type="button" class="btn sm ghost" data-no="${x.u}|${x.id}">ביטול ההזמנה</button></div>`:""}</article>`};
